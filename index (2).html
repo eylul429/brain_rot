@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brain Rot Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--red:#ff2222;--red2:#ff6666;--dark:#0a0a0a;--darker:#050505;}
+html,body{background:var(--dark);color:white;font-family:'Share Tech Mono',monospace;min-height:100vh;}
+
+.screen{display:none;min-height:100vh;width:100%;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem 1.5rem;background:var(--dark);}
+.screen.active{display:flex;}
+
+.intro-title{font-size:36px;color:var(--red);letter-spacing:4px;text-transform:uppercase;margin-bottom:0.5rem;animation:glitch 2s infinite;}
+@keyframes glitch{0%,90%,100%{text-shadow:none}92%{text-shadow:-3px 0 cyan,3px 0 var(--red)}96%{text-shadow:3px 0 cyan,-3px 0 var(--red)}}
+.intro-sub{font-size:13px;color:#666;letter-spacing:2px;margin-bottom:2.5rem;}
+.scan-line{width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);animation:scan 2s linear infinite;margin-bottom:2rem;}
+@keyframes scan{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.start-btn{background:transparent;border:1px solid var(--red);color:var(--red);font-family:'Share Tech Mono',monospace;font-size:16px;letter-spacing:3px;padding:14px 40px;cursor:pointer;text-transform:uppercase;transition:all 0.2s;}
+.start-btn:hover{background:var(--red);color:#000;}
+
+.q-header{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;border-bottom:1px solid #222;padding-bottom:1rem;}
+.q-counter{font-size:12px;color:#555;letter-spacing:2px;}
+.q-progress{font-size:12px;color:var(--red);}
+.progress-track{width:100%;height:3px;background:#1a1a1a;margin-bottom:1.5rem;}
+.progress-fill{height:3px;background:var(--red);transition:width 0.4s;}
+.brain-icon{font-size:32px;margin-bottom:0.75rem;}
+.q-text{font-size:20px;color:white;line-height:1.5;margin-bottom:2rem;text-align:left;width:100%;}
+.options{display:flex;flex-direction:column;gap:10px;width:100%;}
+.opt-btn{background:#0f0f0f;border:1px solid #2a2a2a;color:#ccc;font-family:'Share Tech Mono',monospace;font-size:15px;padding:16px 20px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;transition:all 0.15s;letter-spacing:1px;}
+.opt-btn:hover{border-color:var(--red);color:white;}
+.opt-btn.good.selected{border-color:#00ff88;color:#00ff88;background:#001a0d;}
+.opt-btn.mid.selected{border-color:#ffaa00;color:#ffaa00;background:#1a1000;}
+.opt-btn.bad.selected{border-color:var(--red);color:var(--red);background:#1a0000;}
+.opt-tag{font-size:18px;}
+.next-btn{margin-top:1.5rem;background:transparent;border:1px solid #444;color:#666;font-family:'Share Tech Mono',monospace;font-size:14px;letter-spacing:2px;padding:12px 32px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.next-btn:not(:disabled):hover{border-color:var(--red);color:var(--red);}
+.next-btn:disabled{opacity:0.3;cursor:default;}
+
+.reaction-screen{background:#000;}
+.react-gif-wrap{width:100%;max-width:400px;border:2px solid;margin-bottom:1.5rem;overflow:hidden;}
+.react-gif-wrap img{width:100%;display:block;}
+.react-gif-wrap .no-gif{width:100%;height:220px;display:flex;align-items:center;justify-content:center;font-size:80px;background:#0a0a0a;}
+.react-msg{font-size:22px;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.5rem;font-style:italic;}
+.react-sub{font-size:13px;color:#555;letter-spacing:1px;margin-bottom:2rem;}
+.continue-btn{background:transparent;border:1px solid #333;color:#555;font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:2px;padding:10px 24px;cursor:pointer;text-transform:uppercase;}
+.continue-btn:hover{border-color:#666;color:#999;}
+
+.final-screen{background:#000;position:relative;overflow:hidden;}
+.final-screen::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,0,0,0.03) 2px,rgba(255,0,0,0.03) 4px);pointer-events:none;}
+.sys-title{font-size:14px;color:#ff0000;letter-spacing:4px;text-transform:uppercase;margin-bottom:0.5rem;animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0}}
+.result-headline{font-size:30px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;margin-bottom:0.5rem;line-height:1.3;}
+.result-sub{font-size:13px;letter-spacing:2px;margin-bottom:2rem;color:#888;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:420px;margin-bottom:2rem;}
+.stat-box{background:#0f0f0f;border:1px solid #222;padding:12px 8px;text-align:center;}
+.stat-num{font-size:28px;font-weight:bold;}
+.stat-label{font-size:11px;color:#555;letter-spacing:1px;margin-top:4px;}
+.result-msg{font-size:14px;color:#888;line-height:1.8;max-width:400px;margin-bottom:2rem;text-align:left;border-left:2px solid var(--red);padding-left:1rem;}
+.restart-btn{background:var(--red);color:#000;font-family:'Share Tech Mono',monospace;font-size:14px;letter-spacing:3px;padding:14px 36px;border:none;cursor:pointer;text-transform:uppercase;}
+.restart-btn:hover{background:#ff4444;}
+.error-text{color:var(--red);animation:glitch 1.5s infinite;}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:999;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.overlay img{max-width:340px;max-height:280px;border:2px solid var(--red);display:block;}
+.no-gif-big{font-size:120px;animation:shake 0.4s infinite alternate;}
+@keyframes shake{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+.overlay-msg{font-size:18px;color:var(--red);letter-spacing:3px;margin-top:1rem;text-transform:uppercase;}
+.overlay-hint{font-size:12px;color:#444;margin-top:0.5rem;cursor:pointer;}
+.shake {
+  animation: shakeScreen 0.3s;
+}
+
+@keyframes shakeScreen {
+  0% { transform: translate(0); }
+  25% { transform: translate(-5px, 5px); }
+  50% { transform: translate(5px, -5px); }
+  75% { transform: translate(-5px, 5px); }
+  100% { transform: translate(0); }
+}
+</style>
+</head>
+<body>
+
+<div id="intro" class="screen active">
+  <div style="font-size:14px;color:#ff0000;letter-spacing:4px;margin-bottom:1rem;">// SİSTEM BAŞLATIYOR</div>
+  <div class="intro-title">BRAIN ROT<br>SCANNER</div>
+  <div class="scan-line"></div>
+  <div class="intro-sub">5 SORU / BEYNİNİ TEST ET / SONUCA KAT</div>
+  <button class="start-btn" onclick="startQuiz()">[ TARA ]</button>
+</div>
+
+<div id="qscreen" class="screen" style="align-items:flex-start;text-align:left;justify-content:flex-start;">
+  <div class="q-header" style="width:100%">
+    <span class="q-counter" id="q-counter">SORU 1/5</span>
+    <span class="q-progress" id="q-progress">▓░░░░</span>
+  </div>
+  <div class="progress-track" style="width:100%"><div class="progress-fill" id="pfill" style="width:0%"></div></div>
+  <div class="brain-icon">🧠</div>
+  <div class="q-text" id="q-text"></div>
+  <div class="options" id="opts"></div>
+  <button class="next-btn" id="next-btn" disabled onclick="nextQ()">DEVAM →</button>
+</div>
+
+
+
+<div id="fscreen" class="screen final-screen">
+  <div class="sys-title" id="sys-err">// SİSTEM HATASI</div>
+  <div class="result-headline error-text" id="fheadline">BRAIN ROT<br>KRİTİK</div>
+  <div class="result-sub" id="fsub">ATTENTION SPAN: ERROR</div>
+  <div class="stat-grid">
+    <div class="stat-box"><div class="stat-num" id="st-good" style="color:#00ff88">0</div><div class="stat-label">TEMİZ</div></div>
+    <div class="stat-box"><div class="stat-num" id="st-mid" style="color:#ffaa00">0</div><div class="stat-label">RİSKTE</div></div>
+    <div class="stat-box"><div class="stat-num" id="st-bad" style="color:#ff2222">0</div><div class="stat-label">KRİTİK</div></div>
+  </div>
+  <div class="result-msg" id="fmsg"></div>
+  <div id="result-meme-wrap" style="width:100%;max-width:360px;margin-bottom:2rem;border:2px solid #333;overflow:hidden;display:none;">
+    <img id="result-meme" style="width:100%;display:block;" alt="meme" />
+  </div>
+  <button class="restart-btn" onclick="restart()">[ YENİDEN TARA ]</button>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeOverlay()">
+  <div id="ov-gif-wrap">
+    <div class="no-gif-big" id="ov-emoji">🚨</div>
+  </div>
+  <div class="overlay-msg" id="ov-msg"></div>
+  <div class="overlay-hint">// ekrana dokun</div>
+</div>
+
+<script>
+const Q = [
+  {
+    text: "Günlük kaç saat kısa video izliyorsun?",
+    opts: [
+      {label:"0–1 saat", type:"good", emoji:"👍"},
+      {label:"2–3 saat", type:"mid",  emoji:"😐"},
+      {label:"4+ saat",  type:"bad",  emoji:"🚨"}
+    ],
+    reactions: {
+      good: {
+        msg:"Kontrol sende. Şimdilik sistemi kandırıyorsun.",
+        color:"#00ff88",
+      },
+      mid: {
+        msg:"Algoritma seni çözmeye başlamış.",
+        color:"#ffaa00",
+      },
+      bad: {
+        msg:"Dopamin sistemi ele geçirdi.",
+        color:"#ff2222",
+      }
+    }
+  },
+
+  {
+    text: "Ders çalışırken telefona bakıyor musun?",
+    opts: [
+      {label:"Hiç",    type:"good", emoji:"👍"},
+      {label:"Bazen",  type:"mid",  emoji:"😐"},
+      {label:"Sürekli",type:"bad",  emoji:"🚨"}
+    ],
+    reactions: {
+      good: {
+        msg:"Odak hâlâ sende. Nadir bir durum.",
+        color:"#00ff88",
+      },
+      mid: {
+        msg:"Dikkatin bölünüyor. Parça parça kayboluyorsun.",
+        color:"#ffaa00",
+      },
+      bad: {
+        msg:"Odak yok. Sistem tamamen dağılmış.",
+        color:"#ff2222",
+      }
+    }
+  },
+
+  {
+    text: "Uyumadan önce ekran süren?",
+    opts: [
+      {label:"0–15 dk",  type:"good", emoji:"👍"},
+      {label:"30–60 dk", type:"mid",  emoji:"😐"},
+      {label:"1+ saat",  type:"bad",  emoji:"🚨"}
+    ],
+    reactions: {
+      good: {
+        msg:"Zihin kapanabiliyor. Bu iyi.",
+        color:"#00ff88",
+      },
+      mid: {
+        msg:"Uyku kalitesi düşüyor. Sistem yoruluyor.",
+        color:"#ffaa00",
+      },
+      bad: {
+        msg:"Beyin kapanmıyor. Sürekli açık.",
+        color:"#ff2222",
+      }
+    }
+  },
+
+  {
+    text: "Bir videoyu sonuna kadar izliyor musun?",
+    opts: [
+      {label:"Evet",                type:"good", emoji:"👍"},
+      {label:"Bazen",               type:"mid",  emoji:"😐"},
+      {label:"Hayır, kaydırıyorum", type:"bad",  emoji:"🚨"}
+    ],
+    reactions: {
+      good: {
+        msg:"Dikkat süresi korunmuş.",
+        color:"#00ff88",
+      },
+      mid: {
+        msg:"Sabır azalıyor. Kaydırma refleksi artıyor.",
+        color:"#ffaa00",
+      },
+      bad: {
+        msg:"Dikkat süresi çökmüş.",
+        color:"#ff2222",
+      }
+    }
+  },
+
+  {
+    text: "Telefon olmadan 1 gün geçirebilir misin?",
+    opts: [
+      {label:"Evet",  type:"good", emoji:"👍"},
+      {label:"Zor",   type:"mid",  emoji:"😐"},
+      {label:"Asla",  type:"bad",  emoji:"🚨"}
+    ],
+    reactions: {
+      good: {
+        msg:"Bağımlılık yok. Kontrol sende.",
+        color:"#00ff88",
+      },
+      mid: {
+        msg:"Sınırdasın. Bağ kopmamış.",
+        color:"#ffaa00",
+      },
+      bad: {
+        msg:"Bağımlılık aktif.",
+        color:"#ff2222",
+      }
+    }
+  }
+];
+
+let cur=0, answers=[], selType=null;
+
+const progressBars=["▓░░░░","▓▓░░░","▓▓▓░░","▓▓▓▓░","▓▓▓▓▓"];
+
+function playSound(id){
+  const s = document.getElementById(id);
+  if(!s) return;
+  s.currentTime = 0;
+  s.play().catch(()=>{});
+}
+
+function startQuiz(){
+  show('qscreen');
+  loadQ(0);
+}
+
+function loadQ(i){
+  const q=Q[i];
+  document.getElementById('q-counter').textContent=`SORU ${i+1}/5`;
+  document.getElementById('q-progress').textContent=progressBars[i];
+  document.getElementById('pfill').style.width=`${(i/5)*100}%`;
+  document.getElementById('q-text').textContent=q.text;
+  const c=document.getElementById('opts');
+  c.innerHTML='';
+  selType=null;
+  document.getElementById('next-btn').disabled=true;
+  q.opts.forEach((o)=>{
+    const b=document.createElement('button');
+    b.className=`opt-btn ${o.type}`;
+    b.innerHTML=`<span class="opt-tag">${o.emoji}</span> ${o.label}`;
+    b.onclick=()=>pick(o.type,b);
+    c.appendChild(b);
+  });
+}
+
+function pick(type,btn){
+  playSound("clickSound");
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selType=type;
+  document.getElementById('next-btn').disabled=false;
+}
+
+const MEMES = {
+  good: [
+    "https://i.pinimg.com/736x/06/1a/e5/061ae5d61ecc08daaeeed0c988ec5476.jpg",
+    "https://i.pinimg.com/736x/de/c6/a9/dec6a98a6a358839dd9ce1cc53af86b1.jpg",
+    "https://i.pinimg.com/736x/05/df/96/05df9695350c19db0a8172b6efb248e9.jpg",
+    "https://i.pinimg.com/736x/aa/44/9e/aa449ed5883421ef2c0e43180174cd28.jpg",
+    "https://i.pinimg.com/736x/7c/b0/f2/7cb0f260016be16eafc902288d1d0d55.jpg"
+  ],
+  mid: [
+    "https://i.pinimg.com/736x/97/49/d2/9749d2d4a7ceb04ace5807350bea713e.jpg",
+    "https://i.pinimg.com/736x/ef/88/2e/ef882e6c492b9e1504a3f009a20a7096.jpg",
+    "https://i.pinimg.com/736x/6f/15/f9/6f15f90ab5a389e6c03446d9bfd2b5ee.jpg",
+  ],
+  bad: [
+    "https://i.pinimg.com/1200x/c4/e2/7b/c4e27b53e550f72b88d9ea774f083ca9.jpg",
+    "https://i.pinimg.com/736x/7f/99/a8/7f99a8a228dc0416d535545f2c7f757f.jpg",
+    "https://i.pinimg.com/736x/05/65/19/056519475652ec0041454b797a644ffa.jpg",
+    "https://i.pinimg.com/736x/f3/8b/c7/f38bc75959b15a509d0d0c1a7c11dc88.jpg",
+    "https://i.pinimg.com/736x/68/e3/1a/68e31a236820f3e6e0aa29e4933f26f4.jpg"
+  ]
+};
+
+function nextQ(){
+  if(!selType) return;
+  answers.push(selType);
+  if(selType === "bad" || selType === "mid"){
+    playSound("alertSound");
+  }
+
+  cur++;
+  if(cur < Q.length){ show('qscreen'); loadQ(cur); }
+  else showFinal();
+}
+
+function showFinal(){
+  show('fscreen');
+  playSound("finalSound");
+  document.getElementById('pfill').style.width='100%';
+  const good=answers.filter(a=>a==='good').length;
+  const mid=answers.filter(a=>a==='mid').length;
+  const bad=answers.filter(a=>a==='bad').length;
+  document.getElementById('st-good').textContent=good;
+  document.getElementById('st-mid').textContent=mid;
+  document.getElementById('st-bad').textContent=bad;
+
+  let headline,sub,msg,color;
+  if(bad>=3){
+    headline="BRAIN ROT\nKRİTİK";
+    sub="ATTENTION SPAN: ERROR // SYSTEM OVERLOAD";
+    msg="Beyin dopamine kilitlenmiş. Dikkat süresi kritik seviyede düşmüş. Ekrandan uzaklaşmak artık zorunluluk.";
+    color=["#ff2222","#ff6666"];
+  } else if(mid>=3||(mid>=2&&bad>=1)){
+    headline="DİKKATİN\nPARÇALANMIŞ";
+    sub="FOCUS: DEGRADED // WARNING";
+    msg="Henüz geri dönüş var. Ama alışkanlıklar yerleşiyor. Şimdi fark etmek fırsattır.";
+    color=["#ffaa00","#ffcc44"];
+  } else {
+    headline="KONTROL\nSENDE";
+    sub="BRAIN STATUS: FUNCTIONAL";
+    msg="Ekranla ilişkin sağlıklı görünüyor. Ama dikkatli ol — algoritmalar sabırlıdır.";
+    color=["#00ff88","#44ffaa"];
+  }
+
+  const el=document.getElementById('fheadline');
+  el.style.color=color[0];
+  el.innerHTML=headline.replace('\n','<br>');
+  document.getElementById('fsub').textContent=sub;
+  document.getElementById('fmsg').textContent=msg;
+  document.getElementById('sys-err').style.color=color[0];
+
+  // Meme seç
+  let memeCategory;
+  if(bad>=3) memeCategory='bad';
+  else if(mid>=3||(mid>=2&&bad>=1)) memeCategory='mid';
+  else memeCategory='good';
+  const pool = MEMES[memeCategory];
+  const memeUrl = pool[Math.floor(Math.random()*pool.length)];
+  const memeWrap = document.getElementById('result-meme-wrap');
+  const memeImg = document.getElementById('result-meme');
+  memeImg.src = memeUrl;
+  memeImg.onload = () => {
+    memeWrap.style.borderColor = color[0];
+    memeWrap.style.display = 'block';
+  };
+  memeImg.onerror = () => { memeWrap.style.display = 'none'; };
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function restart(){
+  cur=0; answers=[]; selType=null;
+  document.getElementById('pfill').style.width='0%';
+  document.getElementById('result-meme-wrap').style.display='none';
+  show('intro');
+}
+
+</script>
+<audio id="clickSound" src="https://actions.google.com/sounds/v1/ui/click.ogg"></audio>
+<audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<audio id="finalSound" src="https://actions.google.com/sounds/v1/horror/wood_creak.ogg"></audio>
+</body>
+</html>
